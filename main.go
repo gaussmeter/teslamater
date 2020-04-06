@@ -3,9 +3,11 @@
 /*
 Todo
 
+manage MQTT connection/reconnection:wq
+
 make configurable....
 -- MQTT user, pass, connection.
--- car number 
+-- car number
 -- log level
 -- animations and colors per state
 
@@ -87,16 +89,16 @@ func main() {
 		} else {
 			velocity = fmt.Sprintf("%d", speed)
 		}
-		percent = fmt.Sprintf("%f", float32(batteryLevel) / float32(chargeLimitSoc) * 100)
+		percent = fmt.Sprintf("%f", float32(batteryLevel)/float32(chargeLimitSoc)*100)
 		switch true {
 		case geoFence == "Home" && pluggedIn == true:
-			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,255,0,0\", \"percent\": "+percent+", \"velocity\" : "+velocity+"}"
+			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,255,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
 			break
 		case geoFence == "Home" && pluggedIn == false:
-			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,128,128,0\", \"percent\": "+percent+", \"velocity\" : "+velocity+"}"
+			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,128,128,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
 			break
 		case geoFence != "Home":
-			body = "{\"animation\": \"rainbow\", \"rgbw\": \"0,0,0,0\", \"percent\": "+percent+", \"velocity\" : "+velocity+"}"
+			body = "{\"animation\": \"rainbow\", \"rgbw\": \"0,0,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
 			break
 		}
 		if body != lastBody || state != lastState { // Todo: or longer than 90 seconds from last change
