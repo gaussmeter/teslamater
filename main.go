@@ -23,6 +23,9 @@ import (
 	"strings"
 	"time"
 
+	ag "github.com/andersbetner/mqttagent"
+	log "github.com/sirupsen/logrus"
+
 	//import the Paho Go MQTT library
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
@@ -38,6 +41,7 @@ var batteryLevel int = 0
 
 //define a function for the default message handler
 var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+	//log.WithFields(log.Fields{"topic": msg.Topic(), "payload": string(msg.Payload()) }).Info()
 	if msg.Topic() == "teslamate/cars/1/geofence" {
 		geoFence = string(msg.Payload())
 	}
@@ -59,31 +63,20 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 }
 
 func main() {
-	//create a ClientOptions struct setting the broker address, clientid, turn
-	//off trace output and set the default message handler
-	opts := MQTT.NewClientOptions().AddBroker("ws://192.168.1.51:9001")
-	opts.SetClientID("go-simple")
-	opts.SetDefaultPublishHandler(f)
-
-	//create and start a client using the above ClientOptions
-	c := MQTT.NewClient(opts)
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
-
-	//subscribe to the topic /teslamate/cars/1/# and request messages to be delivered
-	//at a maximum qos of zero, wait for the receipt to confirm the subscription
-	if token := c.Subscribe("teslamate/cars/1/#", 0, nil); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
+	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater")
+	err := agent.Connect()
+	if err != nil {
+		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
+	agent.Subscribe("teslamate/cars/1/#", f)
 
 	var body string = "{\"animation\": \"cylon\", \"rgbw\": \"0,0,0,255\", \"percent\": 10.0, \"velocity\" : 30 }"
 	var lastBody string = ""
 	var lastState string = ""
 	var velocity string = "1"
 	var percent string = "0"
-	for {
+	for !agent.IsTerminated() {
 		if speed == 0 {
 			velocity = "1"
 		} else {
@@ -102,22 +95,22 @@ func main() {
 			break
 		}
 		if body != lastBody || state != lastState { // Todo: or longer than 90 seconds from last change
-			fmt.Printf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s \n%s\n", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent, body)
+			//todo: ?escape json body in log?
+			log.WithFields(log.Fields{ "state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body }).Info()
 			lastBody = body
 			lastState = state
 			httpClient := &http.Client{}
 			req, err := http.NewRequest(http.MethodPut, "http://192.168.1.127:9000/lumen", strings.NewReader(body))
 			if debug == true {
-				fmt.Print(err)
+				fmt.Print(err) //todo: change to log.
 			}
 			resp, err := httpClient.Do(req)
 			if debug == true {
-				fmt.Print(resp)
-				fmt.Print(err)
+				fmt.Print(resp) //todo: change to log
+				fmt.Print(err) //todo: change to log
 			}
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
 
-	//c.Disconnect(250)
 }
