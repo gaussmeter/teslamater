@@ -1,5 +1,6 @@
 FROM golang:latest AS builder
 RUN go get github.com/eclipse/paho.mqtt.golang 
+RUN go get github.com/gaussmeter/mqttagent
 COPY main.go main.go 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -a -installsuffix cgo -o main .
 FROM alpine:latest as ssl
