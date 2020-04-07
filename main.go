@@ -23,15 +23,15 @@ import (
 	"strings"
 	"time"
 
-	randstr "github.com/thanhpk/randstr"
 	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
+	randstr "github.com/thanhpk/randstr"
 
 	//import the Paho Go MQTT library
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
-var debug bool = false
+var debug bool = true
 
 var geoFence string = ""
 var speed int = 0
@@ -64,7 +64,7 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 }
 
 func main() {
-	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater-" + randstr.String(4))
+	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater-"+randstr.String(4))
 	err := agent.Connect()
 	if err != nil {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
@@ -97,18 +97,20 @@ func main() {
 		}
 		if body != lastBody || state != lastState { // Todo: or longer than 90 seconds from last change
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{ "state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body }).Info()
+			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
 			httpClient := &http.Client{}
 			req, err := http.NewRequest(http.MethodPut, "http://192.168.1.127:9000/lumen", strings.NewReader(body))
-			if debug == true {
-				fmt.Print(err) //todo: change to log.
+			if debug == true && err != nil {
+				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
 			resp, err := httpClient.Do(req)
-			if debug == true {
-				fmt.Print(resp) //todo: change to log
-				fmt.Print(err) //todo: change to log
+			if debug == true && err == nil {
+				log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
+			}
+			if debug == true && err != nil {
+				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
 		}
 		time.Sleep(250 * time.Millisecond)
