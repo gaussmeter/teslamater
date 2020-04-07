@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	randstr "github.com/thanhpk/randstr"
 	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
 
@@ -63,7 +64,7 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 }
 
 func main() {
-	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater")
+	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater-" + randstr.String(4))
 	err := agent.Connect()
 	if err != nil {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
