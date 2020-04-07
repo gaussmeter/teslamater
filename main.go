@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	ag "github.com/andersbetner/mqttagent"
+	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
 
 	//import the Paho Go MQTT library
