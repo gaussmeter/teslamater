@@ -64,6 +64,11 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+	log.SetReportCaller(false)
 	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater-"+randstr.String(4))
 	err := agent.Connect()
 	if err != nil {
