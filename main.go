@@ -33,12 +33,19 @@ import (
 
 var debug bool = true
 
-var geoFence string = ""
-var speed int = 0
-var state string = ""
+var geoFence string = "unset"
+var speed int = -1
+var state string = "unset"
 var pluggedIn bool = false
-var chargeLimitSoc int = 0
-var batteryLevel int = 0
+var chargeLimitSoc int = -1
+var batteryLevel int = -1
+var host string = "ws://192.168.1.51:9001"
+var car string = "1"
+var topicPrefix string = "teslamate/cars/"
+var lumen string = "http://192.168.1.127:9000/lumen"
+var user string = ""
+var pass string = ""
+var loopSleep time.Duration = 250
 
 //define a function for the default message handler
 var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
@@ -63,19 +70,53 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	}
 }
 
-func main() {
+func init() {
 	log.SetFormatter(&log.TextFormatter{
 		DisableColors: false,
 		FullTimestamp: true,
 	})
+	// get config from environment
 	log.SetReportCaller(false)
-	agent := ag.NewAgent("ws://192.168.1.51:9001", "teslamater-"+randstr.String(4))
+	if os.Getenv("MQTT_HOST") != "" {
+		host = os.Getenv("MQTT_HOST")
+		log.WithFields(log.Fields{"configFrom":"env", "MQTT_HOST":host}).Info()
+	} else {
+		log.WithFields(log.Fields{"configFrom":"default", "MQTT_HOST":host}).Info()
+	}
+	if os.Getenv("LUMEN_HOST") != "" {
+		lumen = os.Getenv("LUMEN_HOST")
+		log.WithFields(log.Fields{"configFrom":"env", "LUMEN_HOST":lumen}).Info()
+	} else {
+		log.WithFields(log.Fields{"configFrom":"default", "LUMEN_HOST":lumen}).Info()
+	}
+	if os.Getenv("CAR_NUMBER") != "" {
+		car = os.Getenv("CAR_NUMBER")
+		log.WithFields(log.Fields{"configFrom":"env", "CAR_NUMBER":car}).Info()
+	} else {
+		log.WithFields(log.Fields{"configFrom":"default", "CAR_NUMBER":car}).Info()
+	}
+	if os.Getenv("MQTT_USER") != "" {
+		user = os.Getenv("MQTT_USER")
+		log.WithFields(log.Fields{"configFrom":"env", "MQTT_USER":user}).Info()
+	} else {
+		log.WithFields(log.Fields{"configFrom":"detault", "MQTT_USER":user}).Info()
+	}
+	if os.Getenv("MQTT_PASS") != "" {
+		pass = os.Getenv("MQTT_PASS")
+		log.WithFields(log.Fields{"configFrom":"env", "MQTT_PASS":"*******"}).Info()
+	} else {
+		log.WithFields(log.Fields{"configFrom":"default", "MQTT_PASS":pass}).Info()
+	}
+}
+
+func main() {
+	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
 	err := agent.Connect()
 	if err != nil {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
-	agent.Subscribe("teslamate/cars/1/#", f)
+	agent.Subscribe(topicPrefix + car + "/#", f)
 
 	var body string = "{\"animation\": \"cylon\", \"rgbw\": \"0,0,0,255\", \"percent\": 10.0, \"velocity\" : 30 }"
 	var lastBody string = ""
@@ -88,8 +129,17 @@ func main() {
 		} else {
 			velocity = fmt.Sprintf("%d", speed)
 		}
-		percent = fmt.Sprintf("%f", float32(batteryLevel)/float32(chargeLimitSoc)*100)
+		if batteryLevel != 0 && chargeLimitSoc != 0 {
+			percent = fmt.Sprintf("%f", float32(batteryLevel)/float32(chargeLimitSoc)*100)
+		} else {
+			percent = "10"
+		}
+		loopSleep = 250
 		switch true {
+		case geoFence == "unset" || state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1 :
+			log.Info("too many unset values")
+			loopSleep = 3000
+			break
 		case geoFence == "Home" && pluggedIn == true:
 			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,255,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
 			break
@@ -106,7 +156,7 @@ func main() {
 			lastBody = body
 			lastState = state
 			httpClient := &http.Client{}
-			req, err := http.NewRequest(http.MethodPut, "http://192.168.1.127:9000/lumen", strings.NewReader(body))
+			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
@@ -118,7 +168,7 @@ func main() {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
 		}
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(loopSleep* time.Millisecond)
 	}
 
 }
