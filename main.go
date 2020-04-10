@@ -70,6 +70,15 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	}
 }
 
+func getSetting(setting string, defaultValue string) (value string) {
+	if os.Getenv(setting) != "" {
+		log.WithFields(log.Fields{"configFrom":"env", setting:os.Getenv(setting)}).Info()
+		return os.Getenv(setting)
+	}
+	log.WithFields(log.Fields{"configFrom":"default", setting:defaultValue}).Info()
+	return defaultValue
+}
+
 func init() {
 	log.SetFormatter(&log.TextFormatter{
 		DisableColors: false,
@@ -77,36 +86,11 @@ func init() {
 	})
 	// get config from environment
 	log.SetReportCaller(false)
-	if os.Getenv("MQTT_HOST") != "" {
-		host = os.Getenv("MQTT_HOST")
-		log.WithFields(log.Fields{"configFrom":"env", "MQTT_HOST":host}).Info()
-	} else {
-		log.WithFields(log.Fields{"configFrom":"default", "MQTT_HOST":host}).Info()
-	}
-	if os.Getenv("LUMEN_HOST") != "" {
-		lumen = os.Getenv("LUMEN_HOST")
-		log.WithFields(log.Fields{"configFrom":"env", "LUMEN_HOST":lumen}).Info()
-	} else {
-		log.WithFields(log.Fields{"configFrom":"default", "LUMEN_HOST":lumen}).Info()
-	}
-	if os.Getenv("CAR_NUMBER") != "" {
-		car = os.Getenv("CAR_NUMBER")
-		log.WithFields(log.Fields{"configFrom":"env", "CAR_NUMBER":car}).Info()
-	} else {
-		log.WithFields(log.Fields{"configFrom":"default", "CAR_NUMBER":car}).Info()
-	}
-	if os.Getenv("MQTT_USER") != "" {
-		user = os.Getenv("MQTT_USER")
-		log.WithFields(log.Fields{"configFrom":"env", "MQTT_USER":user}).Info()
-	} else {
-		log.WithFields(log.Fields{"configFrom":"detault", "MQTT_USER":user}).Info()
-	}
-	if os.Getenv("MQTT_PASS") != "" {
-		pass = os.Getenv("MQTT_PASS")
-		log.WithFields(log.Fields{"configFrom":"env", "MQTT_PASS":"*******"}).Info()
-	} else {
-		log.WithFields(log.Fields{"configFrom":"default", "MQTT_PASS":pass}).Info()
-	}
+	host = getSetting("MQTT_HOST", host)
+	user = getSetting("MQTT_USER", user)
+	pass = getSetting("MQTT_PASS", pass)
+	lumen = getSetting("LUMEN_HOST", lumen)
+	car = getSetting("CAR_NUMBER", car)
 }
 
 func main() {
