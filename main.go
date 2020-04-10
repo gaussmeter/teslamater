@@ -2,15 +2,9 @@
 
 /*
 Todo
-
-manage MQTT connection/reconnection:wq
-
 make configurable....
--- MQTT user, pass, connection.
--- car number
 -- log level
 -- animations and colors per state
-
 */
 
 package main
@@ -107,6 +101,7 @@ func main() {
 	var lastState string = ""
 	var velocity string = "1"
 	var percent string = "0"
+	var lastSendTime int64 = 0
 	for !agent.IsTerminated() {
 		if speed == 0 {
 			velocity = "1"
@@ -134,7 +129,7 @@ func main() {
 			body = "{\"animation\": \"rainbow\", \"rgbw\": \"0,0,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
 			break
 		}
-		if body != lastBody || state != lastState { // Todo: or longer than 90 seconds from last change
+		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
@@ -151,6 +146,7 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
+			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep* time.Millisecond)
 	}
