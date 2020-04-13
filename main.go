@@ -156,7 +156,7 @@ func main() {
 	var lastState string = ""
 	var velocity int = 1
 	var percent int = 0
-	//var lastSendTime int64 = 0
+	var lastSendTime int64 = 0
 	for !agent.IsTerminated() {
 		if speed == 0 {
 			velocity = 1
@@ -213,7 +213,7 @@ func main() {
 			body = string(out)
 			break
 		}
-		if body != lastBody || state != lastState { //|| time.Now().Unix() - lastSendTime > 90 {
+		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
@@ -230,7 +230,7 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
-			//lastSendTime = time.Now().Unix()
+			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
 	}
