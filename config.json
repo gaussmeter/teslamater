@@ -1,0 +1,86 @@
+{
+  "homepluggedinasleep": {
+    "lumen": {
+      "bright": 64,
+      "animation": "bargraph",
+      "r": 0,
+      "g": 255,
+      "b": 0,
+      "w": 0,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
+  },
+  "homeunpluggedasleep": {
+    "lumen": {
+      "bright": 64,
+      "animation": "bargraph",
+      "r": 0,
+      "g": 128,
+      "b": 128,
+      "w": 0,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
+  },
+  "homepluggedinawake": {
+    "lumen": {
+      "bright": 64,
+      "animation": "bargraph",
+      "r": 0,
+      "g": 255,
+      "b": 0,
+      "w": 0,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
+  },
+  "homeunpluggedawake": {
+    "lumen": {
+      "bright": 64,
+      "animation": "bargraph",
+      "r": 0,
+      "g": 128,
+      "b": 128,
+      "w": 0,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
+  },
+  "default": {
+    "lumen": {
+      "bright": 255,
+      "animation": "cylon",
+      "percent": 10,
+      "velocity": 30,
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "w": 255,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
+  },
+  "nothomeawake": {
+    "lumen": {
+      "bright": 255,
+      "animation": "rainbow"
+    }
+  },
+  "nothomeasleep": {
+    "lumen": {
+      "bright": 64,
+      "animation": "rainbow"
+    }
+  }
+}

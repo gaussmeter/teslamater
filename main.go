@@ -16,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io/ioutil"
+	"encoding/json"
 
 	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
@@ -24,6 +26,53 @@ import (
 	//import the Paho Go MQTT library
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
+
+type Config struct {
+	HomePluggedInAsleep HomePluggedInAsleep `json:"homepluggedinasleep"`
+	HomePluggedInAwake  HomePluggedInAwake  `json:"homepluggedinawake"`
+	HomeUnpluggedAsleep HomeUnpluggedAsleep `json:"homeunpluggedasleep"`
+	HomeUnpluggedAwake  HomeUnpluggedAwake  `json:"homeunpluggedawake"`
+	NotHomeAlseep       NotHomeAlseep       `json:"nothomeasleep"`
+	NotHomeAwake        NotHomeAwake        `json:"nothomeawake"`
+	Default             Default             `json:"default"`
+}
+type Lumen struct {
+	Bright    int    `json:"bright"`
+	Animation string `json:"animation"`
+	Percent   int    `json:"percent"`
+	Velocity  int    `json:"velocity"`
+	R         int    `json:"r"`
+	G         int    `json:"g"`
+	B         int    `json:"b"`
+	W         int    `json:"w"`
+	R2        int    `json:"r2"`
+	G2        int    `json:"g2"`
+	B2        int    `json:"b2"`
+	W2        int    `json:"w2"`
+}
+type Default struct {
+	Lumen Lumen `json:"lumen"`
+}
+type NotHomeAlseep struct {
+	Lumen Lumen `json:"lumen"`
+}
+type HomePluggedInAsleep struct {
+	Lumen Lumen `json:"lumen"`
+}
+type HomeUnpluggedAsleep struct {
+	Lumen Lumen `json:"lumen"`
+}
+type NotHomeAwake struct {
+	Lumen Lumen `json:"lumen"`
+}
+type HomePluggedInAwake struct {
+	Lumen Lumen `json:"lumen"`
+}
+type HomeUnpluggedAwake struct {
+	Lumen Lumen `json:"lumen"`
+}
+
+var config Config
 
 var debug bool = true
 
@@ -88,50 +137,88 @@ func init() {
 }
 
 func main() {
+	jsonFile, err := os.Open("config.json")
+	if err != nil {
+		log.WithFields(log.Fields{"Error": err.Error()}).Error()
+		os.Exit(1)
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &config)
+	log.Info(config.Default)
+
 	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
-	err := agent.Connect()
+	err = agent.Connect()
 	if err != nil {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
 	agent.Subscribe(topicPrefix + car + "/#", f)
-
-	var body string = "{\"animation\": \"cylon\", \"rgbw\": \"0,0,0,255\", \"percent\": 10.0, \"velocity\" : 30 }"
+	var body string  = ""
 	var lastBody string = ""
 	var lastState string = ""
-	var velocity string = "1"
-	var percent string = "0"
-	var lastSendTime int64 = 0
+	var velocity int = 1
+	var percent int = 0
+	//var lastSendTime int64 = 0
 	for !agent.IsTerminated() {
 		if speed == 0 {
-			velocity = "1"
+			velocity = 1
 		} else {
-			velocity = fmt.Sprintf("%d", speed)
+			velocity = speed
 		}
 		if batteryLevel != 0 && chargeLimitSoc != 0 {
-			percent = fmt.Sprintf("%f", float32(batteryLevel)/float32(chargeLimitSoc)*100)
+			percent = int(batteryLevel)/int(chargeLimitSoc)*100
 		} else {
-			percent = "10"
+			percent = 10
 		}
 		loopSleep = 250
 		switch true {
 		case geoFence == "unset" || state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1 :
+			out, _ := json.Marshal(config.Default.Lumen)
+			body = string(out)
 			log.Info("too many unset values")
 			loopSleep = 3000
 			break
-		case geoFence == "Home" && pluggedIn == true:
-			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,255,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
+		case geoFence == "Home" && pluggedIn == true && state != "asleep" :
+			config.HomePluggedInAwake.Lumen.Percent = percent
+			config.HomePluggedInAwake.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.HomePluggedInAwake.Lumen)
+			body = string(out)
 			break
-		case geoFence == "Home" && pluggedIn == false:
-			body = "{\"animation\": \"bargraph\", \"rgbw\": \"0,128,128,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
+		case geoFence == "Home" && pluggedIn == true && state == "asleep" :
+			config.HomePluggedInAsleep.Lumen.Percent = percent
+			config.HomePluggedInAsleep.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.HomePluggedInAsleep.Lumen)
+			body = string(out)
 			break
-		case geoFence != "Home":
-			body = "{\"animation\": \"rainbow\", \"rgbw\": \"0,0,0,0\", \"percent\": " + percent + ", \"velocity\" : " + velocity + "}"
+		case geoFence == "Home" && pluggedIn == false && state != "asleep":
+			config.HomeUnpluggedAwake.Lumen.Percent = percent
+			config.HomeUnpluggedAwake.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.HomeUnpluggedAwake.Lumen)
+			body = string(out)
+			break
+		case geoFence == "Home" && pluggedIn == false && state == "asleep":
+			config.HomeUnpluggedAsleep.Lumen.Percent = percent
+			config.HomeUnpluggedAsleep.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.HomeUnpluggedAsleep.Lumen)
+			body = string(out)
+			break
+		case geoFence != "Home" && state != "asleep":
+			config.NotHomeAwake.Lumen.Percent = percent
+			config.NotHomeAwake.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.NotHomeAwake)
+			body = string(out)
+			break
+		case geoFence != "Home" && state == "asleep":
+			config.NotHomeAlseep.Lumen.Percent = percent
+			config.NotHomeAlseep.Lumen.Velocity = velocity
+			out, _ := json.Marshal(config.NotHomeAlseep.Lumen)
+			body = string(out)
 			break
 		}
-		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
+		if body != lastBody || state != lastState { //|| time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %s", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
+			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
 			httpClient := &http.Client{}
@@ -146,7 +233,7 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
-			lastSendTime = time.Now().Unix()
+			//lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep* time.Millisecond)
 	}

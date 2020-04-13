@@ -10,4 +10,5 @@ RUN apk update && apk add ca-certificates
 FROM scratch AS main
 COPY --from=builder /go/main ./main
 COPY --from=ssl /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY config.json ./config.json
 CMD ["./main"]
