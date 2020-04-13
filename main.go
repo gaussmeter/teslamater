@@ -4,7 +4,6 @@
 Todo
 make configurable....
 -- log level
--- animations and colors per state
 */
 
 package main
@@ -22,8 +21,6 @@ import (
 	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
-
-	//import the Paho Go MQTT library
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
