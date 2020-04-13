@@ -29,7 +29,7 @@
   },
   "homepluggedinawake": {
     "lumen": {
-      "bright": 64,
+      "bright": 255,
       "animation": "bargraph",
       "r": 0,
       "g": 255,
@@ -43,7 +43,7 @@
   },
   "homeunpluggedawake": {
     "lumen": {
-      "bright": 64,
+      "bright": 255,
       "animation": "bargraph",
       "r": 0,
       "g": 128,
