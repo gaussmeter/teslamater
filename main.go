@@ -10,14 +10,14 @@ make configurable....
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"io/ioutil"
-	"encoding/json"
 
 	ag "github.com/gaussmeter/mqttagent"
 	log "github.com/sirupsen/logrus"
@@ -115,10 +115,10 @@ var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 
 func getSetting(setting string, defaultValue string) (value string) {
 	if os.Getenv(setting) != "" {
-		log.WithFields(log.Fields{"configFrom":"env", setting:os.Getenv(setting)}).Info()
+		log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
 		return os.Getenv(setting)
 	}
-	log.WithFields(log.Fields{"configFrom":"default", setting:defaultValue}).Info()
+	log.WithFields(log.Fields{"configFrom": "default", setting: defaultValue}).Info()
 	return defaultValue
 }
 
@@ -153,8 +153,8 @@ func main() {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
-	agent.Subscribe(topicPrefix + car + "/#", f)
-	var body string  = ""
+	agent.Subscribe(topicPrefix+car+"/#", f)
+	var body string = ""
 	var lastBody string = ""
 	var lastState string = ""
 	var velocity int = 1
@@ -167,25 +167,25 @@ func main() {
 			velocity = speed
 		}
 		if batteryLevel != 0 && chargeLimitSoc != 0 {
-			percent = int(batteryLevel)/int(chargeLimitSoc)*100
+			percent = int(batteryLevel) / int(chargeLimitSoc) * 100
 		} else {
 			percent = 10
 		}
 		loopSleep = 250
 		switch true {
-		case geoFence == "unset" || state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1 :
+		case geoFence == "unset" || state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
 			log.Info("too many unset values")
 			loopSleep = 3000
 			break
-		case geoFence == "Home" && pluggedIn == true && state != "asleep" :
+		case geoFence == "Home" && pluggedIn == true && state != "asleep":
 			config.HomePluggedInAwake.Lumen.Percent = percent
 			config.HomePluggedInAwake.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomePluggedInAwake.Lumen)
 			body = string(out)
 			break
-		case geoFence == "Home" && pluggedIn == true && state == "asleep" :
+		case geoFence == "Home" && pluggedIn == true && state == "asleep":
 			config.HomePluggedInAsleep.Lumen.Percent = percent
 			config.HomePluggedInAsleep.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomePluggedInAsleep.Lumen)
@@ -235,7 +235,7 @@ func main() {
 			}
 			//lastSendTime = time.Now().Unix()
 		}
-		time.Sleep(loopSleep* time.Millisecond)
+		time.Sleep(loopSleep * time.Millisecond)
 	}
 
 }
