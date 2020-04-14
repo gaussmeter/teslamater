@@ -164,7 +164,7 @@ func main() {
 			velocity = speed
 		}
 		if batteryLevel != 0 && chargeLimitSoc != 0 {
-			percent = int(batteryLevel) / int(chargeLimitSoc) * 100
+			percent = int((float32(batteryLevel) / float32(chargeLimitSoc)) * 100)
 		} else {
 			percent = 10
 		}
