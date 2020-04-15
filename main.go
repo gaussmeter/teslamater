@@ -210,7 +210,7 @@ func main() {
 		case geoFence != "Home" && state != "asleep":
 			config.NotHomeAwake.Lumen.Percent = percent
 			config.NotHomeAwake.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.NotHomeAwake)
+			out, _ := json.Marshal(config.NotHomeAwake.Lumen)
 			body = string(out)
 			break
 		case geoFence != "Home" && state == "asleep":
