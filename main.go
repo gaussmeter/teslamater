@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	pkger "github.com/markbates/pkger"
 )
 
 type Config struct {
@@ -134,15 +135,21 @@ func init() {
 }
 
 func main() {
-	jsonFile, err := os.Open("config.json")
+	configJSON, err := os.Open("config.json")
+	if err != nil {
+		log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
+	}
+	defaultJSON, err := pkger.Open("/default.json")
 	if err != nil {
 		log.WithFields(log.Fields{"Error": err.Error()}).Error()
 		os.Exit(1)
 	}
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := ioutil.ReadAll(defaultJSON)
 	json.Unmarshal(byteValue, &config)
-	log.Info(config.Default)
+	byteValue, _ = ioutil.ReadAll(configJSON)
+	json.Unmarshal(byteValue, &config)
+	configJSON.Close()
+	defaultJSON.Close()
 
 	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
 	err = agent.Connect()
