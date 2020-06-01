@@ -177,7 +177,7 @@ func main() {
 		}
 		loopSleep = 250
 		switch true {
-		case geoFence == "unset" || state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
+		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
 			log.Info("too many unset values")
