@@ -142,7 +142,7 @@ func init() {
 	pass = getSetting("MQTT_PASS", pass)
 	lumen = getSetting("LUMEN_HOST", lumen)
 	car = getSetting("CAR_NUMBER", car)
-	home = getSetting("HOME", home)
+	home = getSetting("GEOFENCE_HOME", home)
 }
 
 func main() {
