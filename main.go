@@ -225,7 +225,7 @@ func main() {
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
-			httpClient := &http.Client{}
+			httpClient := &http.Client{ Timeout: time.Second * 5 }
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
@@ -237,6 +237,7 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
+			defer resp.Body.Close()
 			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
