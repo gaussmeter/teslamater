@@ -82,6 +82,7 @@ var chargeLimitSoc int = -1
 var batteryLevel int = -1
 var host string = "ws://192.168.1.51:9001"
 var car string = "1"
+var home string = "Home"
 var topicPrefix string = "teslamate/cars/"
 var lumen string = "http://192.168.1.127:9000/lumen"
 var user string = ""
@@ -141,6 +142,7 @@ func init() {
 	pass = getSetting("MQTT_PASS", pass)
 	lumen = getSetting("LUMEN_HOST", lumen)
 	car = getSetting("CAR_NUMBER", car)
+	home = getSetting("HOME", home)
 }
 
 func main() {
@@ -198,37 +200,37 @@ func main() {
 			log.Info("too many unset values")
 			loopSleep = 3000
 			break
-		case geoFence == "Home" && pluggedIn == true && state != "asleep":
+		case geoFence == home && pluggedIn == true && state != "asleep":
 			config.HomePluggedInAwake.Lumen.Percent = percent
 			config.HomePluggedInAwake.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomePluggedInAwake.Lumen)
 			body = string(out)
 			break
-		case geoFence == "Home" && pluggedIn == true && state == "asleep":
+		case geoFence == home && pluggedIn == true && state == "asleep":
 			config.HomePluggedInAsleep.Lumen.Percent = percent
 			config.HomePluggedInAsleep.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomePluggedInAsleep.Lumen)
 			body = string(out)
 			break
-		case geoFence == "Home" && pluggedIn == false && state != "asleep":
+		case geoFence == home && pluggedIn == false && state != "asleep":
 			config.HomeUnpluggedAwake.Lumen.Percent = percent
 			config.HomeUnpluggedAwake.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomeUnpluggedAwake.Lumen)
 			body = string(out)
 			break
-		case geoFence == "Home" && pluggedIn == false && state == "asleep":
+		case geoFence == home && pluggedIn == false && state == "asleep":
 			config.HomeUnpluggedAsleep.Lumen.Percent = percent
 			config.HomeUnpluggedAsleep.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.HomeUnpluggedAsleep.Lumen)
 			body = string(out)
 			break
-		case geoFence != "Home" && state != "asleep":
+		case geoFence != home && state != "asleep":
 			config.NotHomeAwake.Lumen.Percent = percent
 			config.NotHomeAwake.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.NotHomeAwake.Lumen)
 			body = string(out)
 			break
-		case geoFence != "Home" && state == "asleep":
+		case geoFence != home && state == "asleep":
 			config.NotHomeAlseep.Lumen.Percent = percent
 			config.NotHomeAlseep.Lumen.Velocity = velocity
 			out, _ := json.Marshal(config.NotHomeAlseep.Lumen)
