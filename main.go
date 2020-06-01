@@ -89,23 +89,32 @@ var pass string = ""
 var loopSleep time.Duration = 250
 
 //define a function for the default message handler
-var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	//log.WithFields(log.Fields{"topic": msg.Topic(), "payload": string(msg.Payload()) }).Info()
+var f_geofence MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/geofence" {
 		geoFence = string(msg.Payload())
 	}
+}
+var f_speed MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/speed" {
 		speed, _ = strconv.Atoi(string(msg.Payload()))
 	}
+}
+var f_state MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/state" {
 		state = string(msg.Payload())
 	}
+}
+var f_plugged_in MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/plugged_in" {
 		pluggedIn, _ = strconv.ParseBool(string(msg.Payload()))
 	}
+}
+var f_charge_limit_soc MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/charge_limit_soc" {
 		chargeLimitSoc, _ = strconv.Atoi(string(msg.Payload()))
 	}
+}
+var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/battery_level" {
 		batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
 	}
@@ -157,7 +166,13 @@ func main() {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
-	agent.Subscribe(topicPrefix+car+"/#", f)
+	agent.Subscribe(topicPrefix+car+"/geofence", f_geofence)
+	agent.Subscribe(topicPrefix+car+"/speed", f_speed)
+	agent.Subscribe(topicPrefix+car+"/state", f_state)
+	agent.Subscribe(topicPrefix+car+"/plugged_in", f_plugged_in)
+	agent.Subscribe(topicPrefix+car+"/charge_limit_soc", f_charge_limit_soc)
+	agent.Subscribe(topicPrefix+car+"/battery_level", f_battery_level)
+
 	var body string = ""
 	var lastBody string = ""
 	var lastState string = ""
