@@ -89,6 +89,8 @@ var user string = ""
 var pass string = ""
 var loopSleep time.Duration = 250
 
+var httpClient = &http.Client{ Timeout: time.Second * 5 }
+
 //define a function for the default message handler
 var f_geofence MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/geofence" {
@@ -242,7 +244,6 @@ func main() {
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
-			httpClient := &http.Client{ Timeout: time.Second * 5 }
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
@@ -258,6 +259,7 @@ func main() {
 			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
+		httpClient.CloseIdleConnections()
 	}
 
 }
