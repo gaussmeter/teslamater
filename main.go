@@ -210,7 +210,7 @@ func main() {
 		} else {
 			percent = 10
 		}
-		loopSleep = 250
+		loopSleep = 10 
 		switch true {
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
