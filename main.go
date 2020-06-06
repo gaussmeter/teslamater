@@ -125,10 +125,10 @@ var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Mess
 
 func getSetting(setting string, defaultValue string) (value string) {
 	if os.Getenv(setting) != "" {
-		//log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
+		log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
 		return os.Getenv(setting)
 	}
-	//log.WithFields(log.Fields{"configFrom": "default", setting: defaultValue}).Info()
+	log.WithFields(log.Fields{"configFrom": "default", setting: defaultValue}).Info()
 	return defaultValue
 }
 
@@ -166,11 +166,11 @@ func init() {
 func main() {
 	configJSON, err := os.Open("config.json")
 	if err != nil {
-		//log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
+		log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
 	}
 	defaultJSON, err := pkger.Open("/default.json")
 	if err != nil {
-		//log.WithFields(log.Fields{"Error": err.Error()}).Error()
+		log.WithFields(log.Fields{"Error": err.Error()}).Error()
 		os.Exit(1)
 	}
 	byteValue, _ := ioutil.ReadAll(defaultJSON)
@@ -183,7 +183,7 @@ func main() {
 	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
 	err = agent.Connect()
 	if err != nil {
-		//log.WithField("error", err).Error("Can't connect to mqtt server")
+		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
 	agent.Subscribe(topicPrefix+car+"/geofence", f_geofence)
@@ -215,7 +215,7 @@ func main() {
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
-			//log.Info("too many unset values")
+			log.Info("too many unset values")
 			//loopSleep = 3000
 			break
 		case geoFence == home && pluggedIn == true && state != "asleep":
