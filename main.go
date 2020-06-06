@@ -19,7 +19,7 @@ import (
 	"time"
 
 	ag "github.com/gaussmeter/mqttagent"
-	//log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	pkger "github.com/markbates/pkger"
@@ -149,14 +149,12 @@ func postToLumen(body string) () {
 }
 
 func init() {
-	/*
 	log.SetFormatter(&log.TextFormatter{
 		DisableColors: false,
 		FullTimestamp: true,
 	})
-	*/
 	// get config from environment
-	//log.SetReportCaller(false)
+	log.SetReportCaller(false)
 	host = getSetting("MQTT_HOST", host)
 	user = getSetting("MQTT_USER", user)
 	pass = getSetting("MQTT_PASS", pass)
