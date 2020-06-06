@@ -135,14 +135,14 @@ func getSetting(setting string, defaultValue string) (value string) {
 func postToLumen(body string) () {
 	req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 	if debug == true && err != nil {
-		//log.WithFields(log.Fields{"error": err.Error()}).Info()
+		log.WithFields(log.Fields{"error": err.Error()}).Info()
 	}
 	resp, err := httpClient.Do(req)
 	if debug == true && err == nil {
-		//log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
+		log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
 	}
 	if debug == true && err != nil {
-		//log.WithFields(log.Fields{"error": err.Error()}).Info()
+		log.WithFields(log.Fields{"error": err.Error()}).Info()
 	}
 	defer resp.Body.Close()
 	_, _ = ioutil.ReadAll(resp.Body)
