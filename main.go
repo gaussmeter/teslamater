@@ -10,7 +10,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -19,7 +19,7 @@ import (
 	"time"
 
 	ag "github.com/gaussmeter/mqttagent"
-	log "github.com/sirupsen/logrus"
+	//log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	pkger "github.com/markbates/pkger"
@@ -125,20 +125,38 @@ var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Mess
 
 func getSetting(setting string, defaultValue string) (value string) {
 	if os.Getenv(setting) != "" {
-		log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
+		//log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
 		return os.Getenv(setting)
 	}
-	log.WithFields(log.Fields{"configFrom": "default", setting: defaultValue}).Info()
+	//log.WithFields(log.Fields{"configFrom": "default", setting: defaultValue}).Info()
 	return defaultValue
 }
 
+func postToLumen(body string) () {
+	req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
+	if debug == true && err != nil {
+		//log.WithFields(log.Fields{"error": err.Error()}).Info()
+	}
+	resp, err := httpClient.Do(req)
+	if debug == true && err == nil {
+		//log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
+	}
+	if debug == true && err != nil {
+		//log.WithFields(log.Fields{"error": err.Error()}).Info()
+	}
+	defer resp.Body.Close()
+	_, _ = ioutil.ReadAll(resp.Body)
+}
+
 func init() {
+	/*
 	log.SetFormatter(&log.TextFormatter{
 		DisableColors: false,
 		FullTimestamp: true,
 	})
+	*/
 	// get config from environment
-	log.SetReportCaller(false)
+	//log.SetReportCaller(false)
 	host = getSetting("MQTT_HOST", host)
 	user = getSetting("MQTT_USER", user)
 	pass = getSetting("MQTT_PASS", pass)
@@ -150,11 +168,11 @@ func init() {
 func main() {
 	configJSON, err := os.Open("config.json")
 	if err != nil {
-		log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
+		//log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
 	}
 	defaultJSON, err := pkger.Open("/default.json")
 	if err != nil {
-		log.WithFields(log.Fields{"Error": err.Error()}).Error()
+		//log.WithFields(log.Fields{"Error": err.Error()}).Error()
 		os.Exit(1)
 	}
 	byteValue, _ := ioutil.ReadAll(defaultJSON)
@@ -167,7 +185,7 @@ func main() {
 	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
 	err = agent.Connect()
 	if err != nil {
-		log.WithField("error", err).Error("Can't connect to mqtt server")
+		//log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
 	agent.Subscribe(topicPrefix+car+"/geofence", f_geofence)
@@ -194,13 +212,13 @@ func main() {
 		} else {
 			percent = 10
 		}
-		loopSleep = 250
+		loopSleep = 25
 		switch true {
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
-			log.Info("too many unset values")
-			loopSleep = 3000
+			//log.Info("too many unset values")
+			//loopSleep = 3000
 			break
 		case geoFence == home && pluggedIn == true && state != "asleep":
 			config.HomePluggedInAwake.Lumen.Percent = percent
@@ -239,23 +257,15 @@ func main() {
 			body = string(out)
 			break
 		}
-		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
+		
+		postToLumen(body)
+		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 0 {
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
+			//log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
-			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
-			if debug == true && err != nil {
-				log.WithFields(log.Fields{"error": err.Error()}).Info()
-			}
-			resp, err := httpClient.Do(req)
-			if debug == true && err == nil {
-				log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
-			}
-			if debug == true && err != nil {
-				log.WithFields(log.Fields{"error": err.Error()}).Info()
-			}
-			defer resp.Body.Close()
+			postToLumen(body)
+
 			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
