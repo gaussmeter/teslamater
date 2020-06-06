@@ -212,7 +212,7 @@ func main() {
 		} else {
 			percent = 10
 		}
-		loopSleep = 25
+		loopSleep = 250
 		switch true {
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
@@ -259,7 +259,7 @@ func main() {
 		}
 		
 		postToLumen(body)
-		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 0 {
+		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			//log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
