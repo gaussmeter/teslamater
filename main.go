@@ -255,7 +255,7 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
-			defer resp.Body.Close()
+			resp.Body.Close()
 			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
