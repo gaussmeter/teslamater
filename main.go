@@ -33,6 +33,7 @@ type Config struct {
 	NotHomeAlseep       NotHomeAlseep       `json:"nothomeasleep"`
 	NotHomeAwake        NotHomeAwake        `json:"nothomeawake"`
 	Default             Default             `json:"default"`
+	UnHealthy           UnHealthy           `json:"unhealthy"`
 }
 type Lumen struct {
 	Bright    int    `json:"bright"`
@@ -69,6 +70,9 @@ type HomePluggedInAwake struct {
 type HomeUnpluggedAwake struct {
 	Lumen Lumen `json:"lumen"`
 }
+type UnHealthy struct {
+	Lumen Lumen `json:"lumen"`
+}
 
 var config Config
 
@@ -80,6 +84,7 @@ var state string = "unset"
 var pluggedIn bool = false
 var chargeLimitSoc int = -1
 var batteryLevel int = -1
+var healthy bool = true
 var host string = "ws://192.168.1.51:9001"
 var car string = "1"
 var home string = "Home"
@@ -120,6 +125,11 @@ var f_charge_limit_soc MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.M
 var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 	if msg.Topic() == "teslamate/cars/1/battery_level" {
 		batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
+	}
+}
+var f_healthy MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+	if msg.Topic() == "teslamate/cars/1/healthy" {
+		healthy, _ = strconv.ParseBool(string(msg.Payload()))
 	}
 }
 
@@ -176,6 +186,7 @@ func main() {
 	agent.Subscribe(topicPrefix+car+"/plugged_in", f_plugged_in)
 	agent.Subscribe(topicPrefix+car+"/charge_limit_soc", f_charge_limit_soc)
 	agent.Subscribe(topicPrefix+car+"/battery_level", f_battery_level)
+	agent.Subscribe(topicPrefix+car+"/healthy", f_healthy)
 
 	var body string = ""
 	var lastBody string = ""
@@ -196,6 +207,10 @@ func main() {
 		}
 		loopSleep = 250
 		switch true {
+		case healthy == false:
+			out, _ := json.Marshal(config.UnHealthy.Lumen)
+			body = string(out)
+			break
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
@@ -241,7 +256,7 @@ func main() {
 		}
 		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
+			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
 			lastBody = body
 			lastState = state
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))

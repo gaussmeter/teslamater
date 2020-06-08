@@ -82,5 +82,21 @@
       "bright": 64,
       "animation": "rainbow"
     }
+  },
+  "unhealthy": {
+    "lumen": {
+      "bright": 255,
+      "animation": "pulse",
+      "percent": 100,
+      "velocity": 255,
+      "r": 255,
+      "g": 0,
+      "b": 0,
+      "w": 0,
+      "r2": 0,
+      "g2": 0,
+      "b2": 0,
+      "w2": 0
+    }
   }
 }
