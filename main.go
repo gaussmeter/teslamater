@@ -96,26 +96,25 @@ var loopSleep time.Duration = 250
 
 var httpClient = &http.Client{ Timeout: time.Second * 5 }
 
-//define a function for the default message handler
-var f_geofence MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var geoFenceMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		geoFence = string(msg.Payload())
 }
-var f_speed MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var speedMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		speed, _ = strconv.Atoi(string(msg.Payload()))
 }
-var f_state MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var stateMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		state = string(msg.Payload())
 }
-var f_plugged_in MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var pluggedInMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		pluggedIn, _ = strconv.ParseBool(string(msg.Payload()))
 }
-var f_charge_limit_soc MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var chargeLimitSocMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		chargeLimitSoc, _ = strconv.Atoi(string(msg.Payload()))
 }
-var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var batteryLevelMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
 }
-var f_healthy MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+var healthyMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		healthy, _ = strconv.ParseBool(string(msg.Payload()))
 }
 
@@ -166,13 +165,13 @@ func main() {
 		log.WithField("error", err).Error("Can't connect to mqtt server")
 		os.Exit(1)
 	}
-	agent.Subscribe(topicPrefix+car+"/geofence", f_geofence)
-	agent.Subscribe(topicPrefix+car+"/speed", f_speed)
-	agent.Subscribe(topicPrefix+car+"/state", f_state)
-	agent.Subscribe(topicPrefix+car+"/plugged_in", f_plugged_in)
-	agent.Subscribe(topicPrefix+car+"/charge_limit_soc", f_charge_limit_soc)
-	agent.Subscribe(topicPrefix+car+"/battery_level", f_battery_level)
-	agent.Subscribe(topicPrefix+car+"/healthy", f_healthy)
+	agent.Subscribe(topicPrefix+car+"/geofence", geoFenceMq)
+	agent.Subscribe(topicPrefix+car+"/speed", speedMq)
+	agent.Subscribe(topicPrefix+car+"/state", stateMq)
+	agent.Subscribe(topicPrefix+car+"/plugged_in", pluggedInMq)
+	agent.Subscribe(topicPrefix+car+"/charge_limit_soc", chargeLimitSocMq)
+	agent.Subscribe(topicPrefix+car+"/battery_level", batteryLevelMq)
+	agent.Subscribe(topicPrefix+car+"/healthy", healthyMq)
 
 	var body string = ""
 	var lastBody string = ""
