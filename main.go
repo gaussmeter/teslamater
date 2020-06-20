@@ -98,39 +98,25 @@ var httpClient = &http.Client{ Timeout: time.Second * 5 }
 
 //define a function for the default message handler
 var f_geofence MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/geofence" {
 		geoFence = string(msg.Payload())
-	}
 }
 var f_speed MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/speed" {
 		speed, _ = strconv.Atoi(string(msg.Payload()))
-	}
 }
 var f_state MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/state" {
 		state = string(msg.Payload())
-	}
 }
 var f_plugged_in MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/plugged_in" {
 		pluggedIn, _ = strconv.ParseBool(string(msg.Payload()))
-	}
 }
 var f_charge_limit_soc MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/charge_limit_soc" {
 		chargeLimitSoc, _ = strconv.Atoi(string(msg.Payload()))
-	}
 }
 var f_battery_level MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/battery_level" {
 		batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
-	}
 }
 var f_healthy MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	if msg.Topic() == "teslamate/cars/1/healthy" {
 		healthy, _ = strconv.ParseBool(string(msg.Payload()))
-	}
 }
 
 func getSetting(setting string, defaultValue string) (value string) {
