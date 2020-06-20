@@ -196,6 +196,30 @@ func main() {
 			out, _ := json.Marshal(config.UnHealthy.Lumen)
 			body = string(out)
 			break
+		// state == offline	
+			// pulse, slow, purple
+			// break
+		// update_available	&& geoFence == Home
+			// cylon, slow, blue
+			// break
+		// state == updating
+			// bargraph, slow, blue, loopSleep = 3 [short loopSleep will cause bargraph animation to repeat.] 
+			// break
+		// state == charging
+			// bargraph, slow, green, loopSleep = 3 [short loopSleep will cause bargraph animation to repeat.]
+			// break
+		// doors_open
+			// pulse, fast, blue
+			// break
+		// trunk_open || frunk_open
+			// pulse, fast, green
+			// break
+		// windows_open && awake && state != driving
+			// pulse, slow, light Blue, Bright
+			// break 
+		// windows_open && asleep && state != driving
+			// pluse, slow, light Blue, Dim 
+			// break
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
