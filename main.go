@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
 )
-
+// Config - defines all of the states.
 type Config struct {
 	HomePluggedInAsleep HomePluggedInAsleep `json:"homepluggedinasleep"`
 	HomePluggedInAwake  HomePluggedInAwake  `json:"homepluggedinawake"`
@@ -42,6 +42,7 @@ type Config struct {
 	WindowOpenAwake     WindowOpenAwake     `json:"windowopenawake"`
 	WindowOpenAsleep    WindowOpenAsleep    `json:"windowopenasleep"`
 }
+// Lumen - body of the POST to lumenHost
 type Lumen struct {
 	Bright    int    `json:"bright"`
 	Animation string `json:"animation"`
@@ -56,51 +57,67 @@ type Lumen struct {
 	B2        int    `json:"b2"`
 	W2        int    `json:"w2"`
 }
+// Default -- default to use when insufficient state is known
 type Default struct {
 	Lumen Lumen `json:"lumen"`
 }
+// NotHomeAlseep  --
 type NotHomeAlseep struct {
 	Lumen Lumen `json:"lumen"`
 }
+// HomePluggedInAsleep --
 type HomePluggedInAsleep struct {
 	Lumen Lumen `json:"lumen"`
 }
+// HomeUnpluggedAsleep --
 type HomeUnpluggedAsleep struct {
 	Lumen Lumen `json:"lumen"`
 }
+// NotHomeAwake --
 type NotHomeAwake struct {
 	Lumen Lumen `json:"lumen"`
 }
+// HomePluggedInAwake --
 type HomePluggedInAwake struct {
 	Lumen Lumen `json:"lumen"`
 }
+// HomeUnpluggedAwake --
 type HomeUnpluggedAwake struct {
 	Lumen Lumen `json:"lumen"`
 }
+// UnHealthy --
 type UnHealthy struct {
 	Lumen Lumen `json:"lumen"`
 }
+// Offline --
 type Offline struct {
 	Lumen Lumen `json:"lumen"`
 }
+// HomeUpdateAvailable --
 type HomeUpdateAvailable struct {
 	Lumen Lumen `json:"lumen"`
 }
+// Updating --
 type Updating struct {
 	Lumen Lumen `json:"lumen"`
 }
+// Charging --
 type Charging struct {
 	Lumen Lumen `json:"lumen"`
 }
+// DoorOpen --
 type DoorOpen struct {
 	Lumen Lumen `json:"lumen"`
 }
+// TrunkOrFrunkOpen --
 type TrunkOrFrunkOpen struct {
 	Lumen Lumen `json:"lumen"`
 }
+// WindowOpenAwake --
 type WindowOpenAwake struct {
 	Lumen Lumen `json:"lumen"`
 }
+// WindowOpenAsleep --
 type WindowOpenAsleep struct {
 	Lumen Lumen `json:"lumen"`
 }
