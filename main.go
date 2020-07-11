@@ -34,6 +34,14 @@ type Config struct {
 	NotHomeAwake        NotHomeAwake        `json:"nothomeawake"`
 	Default             Default             `json:"default"`
 	UnHealthy           UnHealthy           `json:"unhealthy"`
+	Offline             Offline             `json:"offline"`
+	HomeUpdateAvailable  HomeUpdateAvailable `json:"homeupdateavailable"`
+	Updating            Updating             `json:"updating"`
+	Charging			Charging			`json:"charging"`
+	DoorOpen			DoorOpen			`json:"dooropen"`
+	TrunkOrFrunkOpen	TrunkOrFrunkOpen	`json:"trunkorfrunkopen"`
+	WindowOpenAwake     WindowOpenAwake     `json:"windowopenawake"`
+	WindowOpenAsleep    WindowOpenAsleep    `json:"windowopenasleep"`
 }
 type Lumen struct {
 	Bright    int    `json:"bright"`
@@ -73,6 +81,30 @@ type HomeUnpluggedAwake struct {
 type UnHealthy struct {
 	Lumen Lumen `json:"lumen"`
 }
+type Offline struct {
+	Lumen Lumen `json:"lumen"`
+}
+type HomeUpdateAvailable struct {
+	Lumen Lumen `json:"lumen"`
+}
+type Updating struct {
+	Lumen Lumen `json:"lumen"`
+}
+type Charging struct {
+	Lumen Lumen `json:"lumen"`
+}
+type DoorOpen struct {
+	Lumen Lumen `json:"lumen"`
+}
+type TrunkOrFrunkOpen struct {
+	Lumen Lumen `json:"lumen"`
+}
+type WindowOpenAwake struct {
+	Lumen Lumen `json:"lumen"`
+}
+type WindowOpenAsleep struct {
+	Lumen Lumen `json:"lumen"`
+}
 
 var config Config
 
@@ -93,6 +125,12 @@ var lumen string = "http://192.168.1.127:9000/lumen"
 var user string = ""
 var pass string = ""
 var loopSleep time.Duration = 250
+var doorOpen bool = false
+var trunkOpen bool = false
+var frunkOpen bool = false
+var windowOpen bool = false
+var updateAvailable bool = false
+var shiftState string = "P"
 
 var httpClient = &http.Client{ Timeout: time.Second * 5 }
 
@@ -117,7 +155,24 @@ var batteryLevelMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Messa
 var healthyMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
 		healthy, _ = strconv.ParseBool(string(msg.Payload()))
 }
-
+var doorOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		doorOpen, _ = strconv.ParseBool(string(msg.Payload()))
+}
+var trunkOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		trunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
+}
+var frunkOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		frunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
+}
+var windowOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		windowOpen, _ = strconv.ParseBool(string(msg.Payload()))
+}
+var updateAvailableMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		updateAvailable, _ = strconv.ParseBool(string(msg.Payload()))
+}
+var shiftStateMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+		shiftState = string(msg.Payload())
+}
 func getSetting(setting string, defaultValue string) (value string) {
 	if os.Getenv(setting) != "" {
 		log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
@@ -146,12 +201,18 @@ func main() {
 	configJSON, err := os.Open("config.json")
 	if err != nil {
 		log.WithFields(log.Fields{"Error": err.Error()}).Warn("config.json not found, default will be used.")
+	} else {
+		log.Info("loaded config.json")
 	}
+
 	defaultJSON, err := pkger.Open("/default.json")
 	if err != nil {
 		log.WithFields(log.Fields{"Error": err.Error()}).Error()
 		os.Exit(1)
+	} else {
+		log.Info("loaded default.json")
 	}
+
 	byteValue, _ := ioutil.ReadAll(defaultJSON)
 	json.Unmarshal(byteValue, &config)
 	byteValue, _ = ioutil.ReadAll(configJSON)
@@ -172,6 +233,12 @@ func main() {
 	agent.Subscribe(topicPrefix+car+"/charge_limit_soc", chargeLimitSocMq)
 	agent.Subscribe(topicPrefix+car+"/battery_level", batteryLevelMq)
 	agent.Subscribe(topicPrefix+car+"/healthy", healthyMq)
+	agent.Subscribe(topicPrefix+car+"/doors_open", doorOpenMq)
+	agent.Subscribe(topicPrefix+car+"/trunk_open", trunkOpenMq)
+	agent.Subscribe(topicPrefix+car+"/frunk_open", frunkOpenMq)
+	agent.Subscribe(topicPrefix+car+"/windows_open", windowOpenMq)
+	agent.Subscribe(topicPrefix+car+"/update_available", updateAvailableMq)
+	agent.Subscribe(topicPrefix+car+"/shift_state", shiftStateMq)
 
 	var body string = ""
 	var lastBody string = ""
@@ -196,30 +263,38 @@ func main() {
 			out, _ := json.Marshal(config.UnHealthy.Lumen)
 			body = string(out)
 			break
-		// state == offline	
-			// pulse, slow, purple
-			// break
-		// update_available	&& geoFence == Home
-			// cylon, slow, blue
-			// break
-		// state == updating
-			// bargraph, slow, blue, loopSleep = 3 [short loopSleep will cause bargraph animation to repeat.] 
-			// break
-		// state == charging
-			// bargraph, slow, green, loopSleep = 3 [short loopSleep will cause bargraph animation to repeat.]
-			// break
-		// doors_open
-			// pulse, fast, blue
-			// break
-		// trunk_open || frunk_open
-			// pulse, fast, green
-			// break
-		// windows_open && awake && state != driving
-			// pulse, slow, light Blue, Bright
-			// break 
-		// windows_open && asleep && state != driving
-			// pluse, slow, light Blue, Dim 
-			// break
+		case state == "offline":
+			out, _ := json.Marshal(config.Offline.Lumen)
+			body = string(out)
+			break
+		case updateAvailable && geoFence == "Home":
+			out, _ := json.Marshal(config.HomeUpdateAvailable.Lumen)
+			body = string(out)
+			break
+		case state == "updating":
+			out, _ := json.Marshal(config.Updating.Lumen)
+			body = string(out)
+			break
+		case state == "charging":
+			out, _ := json.Marshal(config.Charging.Lumen)
+			body = string(out)
+			break
+		case doorOpen == true:
+			out, _ := json.Marshal(config.DoorOpen.Lumen)
+			body = string(out)
+			break
+		case trunkOpen == true || frunkOpen == true:
+			out, _ := json.Marshal(config.TrunkOrFrunkOpen.Lumen)
+			body = string(out)
+			break
+		case windowOpen == true && state != "asleep" && state != "driving":
+			out, _ := json.Marshal(config.WindowOpenAwake.Lumen)
+			body = string(out)
+			break
+		case windowOpen == true && state == "asleep":
+			out, _ := json.Marshal(config.WindowOpenAsleep.Lumen)
+			body = string(out)
+			break
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
 			out, _ := json.Marshal(config.Default.Lumen)
 			body = string(out)
@@ -265,7 +340,7 @@ func main() {
 		}
 		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent), "body": body}).Info()
+			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d, Door Open: %t, Trunk Open: %t, Frunk Open: %t, Window Open: %t, Update Available: %t, Shift State: %s", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent, doorOpen, trunkOpen, frunkOpen, windowOpen, updateAvailable, shiftState), "body": body}).Info()
 			lastBody = body
 			lastState = state
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
