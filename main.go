@@ -120,7 +120,7 @@ var host string = "ws://192.168.1.51:9001"
 var car string = "1"
 var home string = "Home"
 var topicPrefix string = "teslamate/cars/"
-var lumen string = "http://192.168.1.127:9000/lumen"
+var lumenHost string = "http://192.168.1.127:9000/lumen"
 var user string = ""
 var pass string = ""
 var loopSleep time.Duration = 250
@@ -194,7 +194,7 @@ func init() {
 	host = getSetting("MQTT_HOST", host)
 	user = getSetting("MQTT_USER", user)
 	pass = getSetting("MQTT_PASS", pass)
-	lumen = getSetting("LUMEN_HOST", lumen)
+	lumenHost = getSetting("LUMEN_HOST", lumenHost)
 	car = getSetting("CAR_NUMBER", car)
 	home = getSetting("GEOFENCE_HOME", home)
 }
@@ -330,7 +330,7 @@ func main() {
 				log.WithFields(log.Fields{"GeoFence": geoFence , "Speed": speed, "State": state, "PluggedIn": pluggedIn, "Healthy": healthy, "ChargeLimit": chargeLimitSoc, "ChargeLevel": batteryLevel, "Percent": percent, "DoorOpen": doorOpen, "TrunkOpen": trunkOpen, "FrunkOpen": frunkOpen, "WindowOpen": windowOpen, "UpdateAvailable": updateAvailable, "ShiftState": shiftState}).Info()
 				log.WithFields(log.Fields{"body": body}).Info()
 			}
-			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
+			req, err := http.NewRequest(http.MethodPut, lumenHost, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
