@@ -10,7 +10,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -327,20 +326,23 @@ func main() {
 		body = string(out)
 		if body != lastBody || time.Now().Unix()-lastSendTime > 90 {
 			//todo: ?escape json body in log?
-			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d, Door Open: %t, Trunk Open: %t, Frunk Open: %t, Window Open: %t, Update Available: %t, Shift State: %s", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent, doorOpen, trunkOpen, frunkOpen, windowOpen, updateAvailable, shiftState), "body": body}).Info()
-			lastBody = body
+			if body != lastBody {
+				log.WithFields(log.Fields{"GeoFence": geoFence , "Speed": speed, "State": state, "PluggedIn": pluggedIn, "Healthy": healthy, "ChargeLimit": chargeLimitSoc, "ChargeLevel": batteryLevel, "Percent": percent, "DoorOpen": doorOpen, "TrunkOpen": trunkOpen, "FrunkOpen": frunkOpen, "WindowOpen": windowOpen, "UpdateAvailable": updateAvailable, "ShiftState": shiftState}).Info()
+				log.WithFields(log.Fields{"body": body}).Info()
+			}
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
 			resp, err := httpClient.Do(req)
-			if debug == true && err == nil {
+			if debug == true && err == nil && body != lastBody {
 				log.WithFields(log.Fields{"statusCode": resp.StatusCode}).Info("response")
 			}
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
 			resp.Body.Close()
+			lastBody = body
 			lastSendTime = time.Now().Unix()
 		}
 		time.Sleep(loopSleep * time.Millisecond)
