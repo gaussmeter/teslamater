@@ -245,7 +245,6 @@ func main() {
 
 	var body string = ""
 	var lastBody string = ""
-	var lastState string = ""
 	var velocity int = 1
 	var percent int = 0
 	var lastSendTime int64 = 0
@@ -326,11 +325,10 @@ func main() {
 			break
 		}
 		body = string(out)
-		if body != lastBody || state != lastState || time.Now().Unix()-lastSendTime > 90 {
+		if body != lastBody || time.Now().Unix()-lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d, Door Open: %t, Trunk Open: %t, Frunk Open: %t, Window Open: %t, Update Available: %t, Shift State: %s", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent, doorOpen, trunkOpen, frunkOpen, windowOpen, updateAvailable, shiftState), "body": body}).Info()
 			lastBody = body
-			lastState = state
 			req, err := http.NewRequest(http.MethodPut, lumen, strings.NewReader(body))
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
