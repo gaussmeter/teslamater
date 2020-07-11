@@ -18,11 +18,11 @@ import (
 	"strings"
 	"time"
 
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 	ag "github.com/gaussmeter/mqttagent"
+	pkger "github.com/markbates/pkger"
 	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
-	MQTT "github.com/eclipse/paho.mqtt.golang"
-	pkger "github.com/markbates/pkger"
 )
 
 type Config struct {
@@ -35,11 +35,11 @@ type Config struct {
 	Default             Default             `json:"default"`
 	UnHealthy           UnHealthy           `json:"unhealthy"`
 	Offline             Offline             `json:"offline"`
-	HomeUpdateAvailable  HomeUpdateAvailable `json:"homeupdateavailable"`
-	Updating            Updating             `json:"updating"`
-	Charging			Charging			`json:"charging"`
-	DoorOpen			DoorOpen			`json:"dooropen"`
-	TrunkOrFrunkOpen	TrunkOrFrunkOpen	`json:"trunkorfrunkopen"`
+	HomeUpdateAvailable HomeUpdateAvailable `json:"homeupdateavailable"`
+	Updating            Updating            `json:"updating"`
+	Charging            Charging            `json:"charging"`
+	DoorOpen            DoorOpen            `json:"dooropen"`
+	TrunkOrFrunkOpen    TrunkOrFrunkOpen    `json:"trunkorfrunkopen"`
 	WindowOpenAwake     WindowOpenAwake     `json:"windowopenawake"`
 	WindowOpenAsleep    WindowOpenAsleep    `json:"windowopenasleep"`
 }
@@ -134,47 +134,48 @@ var shiftState string = "P"
 
 var out []byte
 
-var httpClient = &http.Client{ Timeout: time.Second * 5 }
+var httpClient = &http.Client{Timeout: time.Second * 5}
 
 var geoFenceMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		geoFence = string(msg.Payload())
+	geoFence = string(msg.Payload())
 }
 var speedMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		speed, _ = strconv.Atoi(string(msg.Payload()))
+	speed, _ = strconv.Atoi(string(msg.Payload()))
 }
 var stateMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		state = string(msg.Payload())
+	state = string(msg.Payload())
 }
 var pluggedInMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		pluggedIn, _ = strconv.ParseBool(string(msg.Payload()))
+	pluggedIn, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var chargeLimitSocMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		chargeLimitSoc, _ = strconv.Atoi(string(msg.Payload()))
+	chargeLimitSoc, _ = strconv.Atoi(string(msg.Payload()))
 }
 var batteryLevelMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
+	batteryLevel, _ = strconv.Atoi(string(msg.Payload()))
 }
 var healthyMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		healthy, _ = strconv.ParseBool(string(msg.Payload()))
+	healthy, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var doorOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		doorOpen, _ = strconv.ParseBool(string(msg.Payload()))
+	doorOpen, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var trunkOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		trunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
+	trunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var frunkOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		frunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
+	frunkOpen, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var windowOpenMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		windowOpen, _ = strconv.ParseBool(string(msg.Payload()))
+	windowOpen, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var updateAvailableMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		updateAvailable, _ = strconv.ParseBool(string(msg.Payload()))
+	updateAvailable, _ = strconv.ParseBool(string(msg.Payload()))
 }
 var shiftStateMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-		shiftState = string(msg.Payload())
+	shiftState = string(msg.Payload())
 }
+
 func getSetting(setting string, defaultValue string) (value string) {
 	if os.Getenv(setting) != "" {
 		log.WithFields(log.Fields{"configFrom": "env", setting: os.Getenv(setting)}).Info()
@@ -325,7 +326,7 @@ func main() {
 			break
 		}
 		body = string(out)
-		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
+		if body != lastBody || state != lastState || time.Now().Unix()-lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d, Door Open: %t, Trunk Open: %t, Frunk Open: %t, Window Open: %t, Update Available: %t, Shift State: %s", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent, doorOpen, trunkOpen, frunkOpen, windowOpen, updateAvailable, shiftState), "body": body}).Info()
 			lastBody = body
