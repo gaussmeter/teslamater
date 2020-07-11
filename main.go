@@ -132,6 +132,8 @@ var windowOpen bool = false
 var updateAvailable bool = false
 var shiftState string = "P"
 
+var out []byte
+
 var httpClient = &http.Client{ Timeout: time.Second * 5 }
 
 var geoFenceMq MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
@@ -260,84 +262,69 @@ func main() {
 		loopSleep = 250
 		switch true {
 		case healthy == false:
-			out, _ := json.Marshal(config.UnHealthy.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.UnHealthy.Lumen)
 			break
 		case state == "offline":
-			out, _ := json.Marshal(config.Offline.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.Offline.Lumen)
 			break
 		case updateAvailable && geoFence == "Home":
-			out, _ := json.Marshal(config.HomeUpdateAvailable.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.HomeUpdateAvailable.Lumen)
 			break
 		case state == "updating":
-			out, _ := json.Marshal(config.Updating.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.Updating.Lumen)
 			break
 		case state == "charging":
-			out, _ := json.Marshal(config.Charging.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.Charging.Lumen)
 			break
 		case doorOpen == true:
-			out, _ := json.Marshal(config.DoorOpen.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.DoorOpen.Lumen)
 			break
 		case trunkOpen == true || frunkOpen == true:
-			out, _ := json.Marshal(config.TrunkOrFrunkOpen.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.TrunkOrFrunkOpen.Lumen)
 			break
 		case windowOpen == true && state != "asleep" && state != "driving":
-			out, _ := json.Marshal(config.WindowOpenAwake.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.WindowOpenAwake.Lumen)
 			break
 		case windowOpen == true && state == "asleep":
-			out, _ := json.Marshal(config.WindowOpenAsleep.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.WindowOpenAsleep.Lumen)
 			break
 		case state == "unset" || speed == -1 || batteryLevel == -1 || chargeLimitSoc == -1:
-			out, _ := json.Marshal(config.Default.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.Default.Lumen)
 			log.Info("too many unset values")
 			loopSleep = 3000
 			break
 		case geoFence == home && pluggedIn == true && state != "asleep":
 			config.HomePluggedInAwake.Lumen.Percent = percent
 			config.HomePluggedInAwake.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.HomePluggedInAwake.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.HomePluggedInAwake.Lumen)
 			break
 		case geoFence == home && pluggedIn == true && state == "asleep":
 			config.HomePluggedInAsleep.Lumen.Percent = percent
 			config.HomePluggedInAsleep.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.HomePluggedInAsleep.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.HomePluggedInAsleep.Lumen)
 			break
 		case geoFence == home && pluggedIn == false && state != "asleep":
 			config.HomeUnpluggedAwake.Lumen.Percent = percent
 			config.HomeUnpluggedAwake.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.HomeUnpluggedAwake.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.HomeUnpluggedAwake.Lumen)
 			break
 		case geoFence == home && pluggedIn == false && state == "asleep":
 			config.HomeUnpluggedAsleep.Lumen.Percent = percent
 			config.HomeUnpluggedAsleep.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.HomeUnpluggedAsleep.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.HomeUnpluggedAsleep.Lumen)
 			break
 		case geoFence != home && state != "asleep":
 			config.NotHomeAwake.Lumen.Percent = percent
 			config.NotHomeAwake.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.NotHomeAwake.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.NotHomeAwake.Lumen)
 			break
 		case geoFence != home && state == "asleep":
 			config.NotHomeAlseep.Lumen.Percent = percent
 			config.NotHomeAlseep.Lumen.Velocity = velocity
-			out, _ := json.Marshal(config.NotHomeAlseep.Lumen)
-			body = string(out)
+			out, _ = json.Marshal(config.NotHomeAlseep.Lumen)
 			break
 		}
+		body = string(out)
 		if body != lastBody || state != lastState || time.Now().Unix() - lastSendTime > 90 {
 			//todo: ?escape json body in log?
 			log.WithFields(log.Fields{"state": fmt.Sprintf("GeoFence: %s, Speed: %d, State: %s, Plugged In: %t, Healthy: %t, Charge Limit: %d, Charge Level: %d, Percent: %d, Door Open: %t, Trunk Open: %t, Frunk Open: %t, Window Open: %t, Update Available: %t, Shift State: %s", geoFence, speed, state, pluggedIn, healthy, chargeLimitSoc, batteryLevel, percent, doorOpen, trunkOpen, frunkOpen, windowOpen, updateAvailable, shiftState), "body": body}).Info()
