@@ -1,7 +1,7 @@
-FROM golang:1.14.2 AS builder
+FROM golang:1.15.6 AS builder
 COPY main.go default.json go.mod /go/src/teslamater/
 WORKDIR /go/src/teslamater/
-RUN curl -L -o pkger.tar.gz https://github.com/markbates/pkger/releases/download/v0.15.1/pkger_0.15.1_Linux_x86_64.tar.gz && \
+RUN curl -L -o pkger.tar.gz https://github.com/markbates/pkger/releases/download/v0.17.1/pkger_0.17.1_Linux_x86_64.tar.gz && \
     tar -zxvf *.tar.gz pkger && \
     ./pkger 
 #RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o main *.go 
