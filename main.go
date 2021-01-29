@@ -360,7 +360,9 @@ func main() {
 			if debug == true && err != nil {
 				log.WithFields(log.Fields{"error": err.Error()}).Info()
 			}
-			resp.Body.Close()
+			if resp != nil {
+			        resp.Body.Close()
+			}
 			lastBody = body
 			lastSendTime = time.Now().Unix()
 		}
