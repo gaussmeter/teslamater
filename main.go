@@ -9,6 +9,7 @@ make configurable....
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -19,10 +20,13 @@ import (
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	ag "github.com/gaussmeter/mqttagent"
-	pkger "github.com/markbates/pkger"
 	log "github.com/sirupsen/logrus"
 	randstr "github.com/thanhpk/randstr"
 )
+
+//go:embed default.json
+var embededDefaultJson embed.FS
+
 // Config - defines all of the states.
 type Config struct {
 	HomePluggedInAsleep HomePluggedInAsleep `json:"homepluggedinasleep"`
@@ -224,7 +228,7 @@ func main() {
 		log.Info("loaded config.json")
 	}
 
-	defaultJSON, err := pkger.Open("/default.json")
+	defaultJSON, err := embededDefaultJson.ReadFile("default.json")
 	if err != nil {
 		log.WithFields(log.Fields{"Error": err.Error()}).Error()
 		os.Exit(1)
@@ -232,12 +236,10 @@ func main() {
 		log.Info("loaded default.json")
 	}
 
-	byteValue, _ := ioutil.ReadAll(defaultJSON)
-	json.Unmarshal(byteValue, &config)
-	byteValue, _ = ioutil.ReadAll(configJSON)
+	json.Unmarshal(defaultJSON, &config)
+	byteValue, _ := ioutil.ReadAll(configJSON)
 	json.Unmarshal(byteValue, &config)
 	configJSON.Close()
-	defaultJSON.Close()
 
 	agent := ag.NewAgent(host, "teslamater-"+randstr.String(4), user, pass)
 	err = agent.Connect()
