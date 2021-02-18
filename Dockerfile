@@ -1,4 +1,4 @@
-FROM golang:1.16-rc AS builder
+FROM golang:1.16.0 AS builder
 COPY main.go default.json go.mod go.sum /go/src/teslamater/
 WORKDIR /go/src/teslamater/
 #RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o main *.go 
